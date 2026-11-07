@@ -31,7 +31,10 @@ export class BlazeSlider extends Automata {
   passedConfig?: BlazeConfig
   autoplayTimer?: any
   onSlideCbs?: Set<SlideChangeCallback>
-
+  private resizeWidth = window.innerWidth
+  private ignoreResize = false
+  private resizeTimer?: ReturnType<typeof setTimeout>
+  
   constructor(blazeSliderEl: HTMLElement, blazeConfig?: BlazeConfig) {
     const track = blazeSliderEl.querySelector('.blaze-track') as Track
     const slides = track.children
@@ -61,29 +64,7 @@ export class BlazeSlider extends Automata {
     construct(config, slider)
 
     // throttled to refresh every 200ms when resizing
-    let ignoreResize = false
-    let width = 0
-    window.addEventListener('resize', () => {
-      if (width === 0) {
-        width = window.innerWidth
-        return
-      }
-
-      const newWidth = window.innerWidth
-
-      // ignore height change - only refresh if the width is changed
-      if (width === newWidth) return
-      width = newWidth
-
-      if (!ignoreResize) {
-        ignoreResize = true
-
-        setTimeout(() => {
-          slider.refresh()
-          ignoreResize = false
-        }, 200)
-      }
-    })
+    window.addEventListener('resize', this.windowResizeListener)
   }
 
   next(count?: number) {
@@ -117,8 +98,14 @@ export class BlazeSlider extends Automata {
   }
 
   destroy() {
-    // remove side effects that won't be overridden by construct()
-
+  // remove side effects that won't be overridden by construct()
+    window.removeEventListener('resize', this.windowResizeListener);
+    if( this.resizeTimer !== undefined ) {
+      clearTimeout(this.resizeTimer)
+      this.resizeTimer = undefined;
+    }
+    this.ignoreResize = false
+      
     // remove old drag event handler
     this.track.removeEventListener(
       isTouch() ? 'touchstart' : 'pointerdown',
@@ -144,6 +131,8 @@ export class BlazeSlider extends Automata {
 
     this.destroy()
     construct(newConfig, this)
+    this.resizeWidth = window.innerWidth
+    window.addEventListener('resize', this.windowResizeListener)
   }
 
   /**
@@ -154,6 +143,22 @@ export class BlazeSlider extends Automata {
     if (!this.onSlideCbs) this.onSlideCbs = new Set()
     this.onSlideCbs.add(cb)
     return () => this.onSlideCbs!.delete(cb)
+  }
+
+  windowResizeListener = () => {
+    const newWidth = window.innerWidth
+    if (this.resizeWidth === newWidth) return
+    this.resizeWidth = newWidth
+    
+    if (!this.ignoreResize) {
+      this.ignoreResize = true
+    
+      this.resizeTimer = setTimeout(() => {
+        this.resizeTimer = undefined
+        this.refresh()
+        this.ignoreResize = false
+      }, 200)
+    }
   }
 }
 
