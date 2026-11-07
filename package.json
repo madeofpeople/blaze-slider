@@ -2,6 +2,20 @@
   "name": "blaze-slider-js",
   "description": "blaze-slider Monorepo",
   "private": true,
+  "main": "./blaze-slider/dist/blaze-slider.cjs.prod.js",
+  "module": "./blaze-slider/dist/blaze-slider.esm.js",
+  "types": "./blaze-slider/dist/blaze-slider.esm.d.ts",
+  "files": [
+    "blaze-slider/dist"
+  ],
+  "exports": {
+    ".": {
+      "types": "./blaze-slider/dist/blaze-slider.esm.d.ts",
+      "import": "./blaze-slider/dist/blaze-slider.esm.js",
+      "require": "./blaze-slider/dist/blaze-slider.cjs.prod.js"
+    },
+    "./dist/*": "./blaze-slider/dist/*"
+  },
   "scripts": {
     "benchmark": "npm run dev -w benchmark",
     "build:website": "npm run build -w website",
@@ -9,7 +23,7 @@
     "lint": "eslint \"**/*.ts\" --fix",
     "test": "npm run test -w blaze-slider",
     "dev": "npm run dev -w fixtures/blaze-slider-test",
-    "prepare": "husky install",
+    "prepare": "husky install && npm run build --workspace=blaze-slider",
     "prettier": "prettier -w ."
   },
   "keywords": [],
@@ -22,6 +36,11 @@
     "website",
     "docs"
   ],
+  "overrides": {
+    "rollup-plugin-ts": {
+      "browserslist-generator": "^3.0.0"
+    }
+  },
   "devDependencies": {
     "@typescript-eslint/eslint-plugin": "^5.8.0",
     "@typescript-eslint/parser": "^5.8.0",
